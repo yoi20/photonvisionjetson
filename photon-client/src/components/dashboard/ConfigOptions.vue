@@ -7,6 +7,7 @@ import InputTab from "@/components/dashboard/tabs/InputTab.vue";
 import ThresholdTab from "@/components/dashboard/tabs/ThresholdTab.vue";
 import ContoursTab from "@/components/dashboard/tabs/ContoursTab.vue";
 import AprilTagTab from "@/components/dashboard/tabs/AprilTagTab.vue";
+import AprilTagCudaTab from "@/components/dashboard/tabs/AprilTagCudaTab.vue";
 import ArucoTab from "@/components/dashboard/tabs/ArucoTab.vue";
 import ObjectDetectionTab from "@/components/dashboard/tabs/ObjectDetectionTab.vue";
 import OutputTab from "@/components/dashboard/tabs/OutputTab.vue";
@@ -29,7 +30,8 @@ const allTabs = Object.freeze({
   thresholdTab: { tabName: "Threshold", component: ThresholdTab },
   contoursTab: { tabName: "Contours", component: ContoursTab },
   apriltagTab: { tabName: "AprilTag", component: AprilTagTab },
-  arucoTab: { tabName: "ArUco", component: ArucoTab },
+  apriltagCudaTab: { tabName: "AprilTagCuda", component: AprilTagCudaTab },
+  arucoTab: { tabName: "Aruco", component: ArucoTab },
   objectDetectionTab: { tabName: "Object Detection", component: ObjectDetectionTab },
   outputTab: { tabName: "Output", component: OutputTab },
   targetsTab: { tabName: "Targets", component: TargetsTab },
@@ -50,6 +52,7 @@ const getTabGroups = (): ConfigOption[][] => {
         allTabs.thresholdTab,
         allTabs.contoursTab,
         allTabs.apriltagTab,
+        allTabs.apriltagCudaTab,
         allTabs.arucoTab,
         allTabs.objectDetectionTab,
         allTabs.outputTab
@@ -63,6 +66,7 @@ const getTabGroups = (): ConfigOption[][] => {
         allTabs.thresholdTab,
         allTabs.contoursTab,
         allTabs.apriltagTab,
+        allTabs.apriltagCudaTab,
         allTabs.arucoTab,
         allTabs.objectDetectionTab,
         allTabs.outputTab
@@ -73,7 +77,7 @@ const getTabGroups = (): ConfigOption[][] => {
     return [
       [allTabs.inputTab],
       [allTabs.thresholdTab],
-      [allTabs.contoursTab, allTabs.apriltagTab, allTabs.arucoTab, allTabs.objectDetectionTab, allTabs.outputTab],
+      [allTabs.contoursTab, allTabs.apriltagTab, allTabs.apriltagCudaTab, allTabs.arucoTab, allTabs.objectDetectionTab, allTabs.outputTab],
       [allTabs.targetsTab, allTabs.pnpTab, allTabs.map3dTab]
     ];
   }
@@ -86,21 +90,27 @@ const tabGroups = computed<ConfigOption[][]>(() => {
 
   const allow3d = useCameraSettingsStore().currentPipelineSettings.solvePNPEnabled;
   const isAprilTag = useCameraSettingsStore().currentWebsocketPipelineType === WebsocketPipelineType.AprilTag;
+  const isAprilTagCuda = useCameraSettingsStore().currentWebsocketPipelineType === WebsocketPipelineType.AprilTagCuda;
   const isAruco = useCameraSettingsStore().currentWebsocketPipelineType === WebsocketPipelineType.Aruco;
   const isObjectDetection =
     useCameraSettingsStore().currentWebsocketPipelineType === WebsocketPipelineType.ObjectDetection;
 
   return getTabGroups()
     .map((tabGroup) =>
-      tabGroup.filter(
-        (tabConfig) =>
-          !(!allow3d && tabConfig.tabName === "3D") && //Filter out 3D tab any time 3D isn't calibrated
-          !((!allow3d || isAprilTag || isAruco || isObjectDetection) && tabConfig.tabName === "PnP") && //Filter out the PnP config tab if 3D isn't available, or we're doing AprilTags
-          !((isAprilTag || isAruco || isObjectDetection) && tabConfig.tabName === "Threshold") && //Filter out threshold tab if we're doing AprilTags
-          !((isAprilTag || isAruco || isObjectDetection) && tabConfig.tabName === "Contours") && //Filter out contours if we're doing AprilTags
-          !(!isAprilTag && tabConfig.tabName === "AprilTag") && //Filter out apriltag unless we actually are doing AprilTags
-          !(!isAruco && tabConfig.tabName === "ArUco") &&
-          !(!isObjectDetection && tabConfig.tabName === "Object Detection") //Filter out ArUco unless we actually are doing ArUco
+      tabGroup.filter((tabConfig) =>
+        // Hide 3D tab if 3D solve is not enabled
+        !( !allow3d && tabConfig.tabName === "3D" ) &&
+        // Hide PnP when 3D isn't available or when specialized pipelines are active
+        !( (!allow3d || isAprilTag || isAprilTagCuda || isAruco || isObjectDetection) && tabConfig.tabName === "PnP" ) &&
+        // Threshold and Contours are not applicable for tag/OD pipelines
+        !( (isAprilTag || isAprilTagCuda || isAruco || isObjectDetection) && (tabConfig.tabName === "Threshold" || tabConfig.tabName === "Contours") ) &&
+        // Show AprilTag tab only for software AprilTag
+        !( !isAprilTag && tabConfig.tabName === "AprilTag" ) &&
+        // Show AprilTagCuda tab only for CUDA AprilTag
+        !( !isAprilTagCuda && tabConfig.tabName === "AprilTagCuda" ) &&
+        // Show Aruco and Object Detection only for their respective pipeline types
+        !( !isAruco && tabConfig.tabName === "Aruco" ) &&
+        !( !isObjectDetection && tabConfig.tabName === "Object Detection" )
       )
     )
     .filter((it) => it.length); // Remove empty tab groups

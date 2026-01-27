@@ -83,6 +83,7 @@ public class GenericUSBCameraSettables extends VisionSourceSettables {
     }
 
     protected void setUpExposureProperties() {
+	    logger.debug("start usb setupexposure");
         // Photonvision needs to be able to control absolute exposure. Make sure we can
         // first.
         var expProp =
@@ -195,7 +196,7 @@ public class GenericUSBCameraSettables extends VisionSourceSettables {
             softSet("auto_exposure_bias", 0);
             softSet("iso_sensitivity_auto", 0); // Disable auto ISO adjustment
             softSet("iso_sensitivity", 0); // Manual ISO adjustment
-            if (autoExposureProp != null) autoExposureProp.set(PROP_AUTO_EXPOSURE_DISABLED);
+            if(autoExposureProp != null) autoExposureProp.set(PROP_AUTO_EXPOSURE_DISABLED);
 
             // Most cameras leave exposure time absolute at the last value from their AE
             // algorithm.
@@ -207,7 +208,7 @@ public class GenericUSBCameraSettables extends VisionSourceSettables {
             softSet("auto_exposure_bias", 12);
             softSet("iso_sensitivity_auto", 1);
             softSet("iso_sensitivity", 1); // Manual ISO adjustment by default
-            if (autoExposureProp != null) autoExposureProp.set(PROP_AUTO_EXPOSURE_ENABLED);
+            if(autoExposureProp != null) autoExposureProp.set(PROP_AUTO_EXPOSURE_ENABLED);
         }
     }
 
@@ -225,7 +226,7 @@ public class GenericUSBCameraSettables extends VisionSourceSettables {
     public void setExposureRaw(double exposureRaw) {
         if (exposureRaw >= 0.0) {
             try {
-                if (autoExposureProp != null) autoExposureProp.set(PROP_AUTO_EXPOSURE_DISABLED);
+                if(autoExposureProp != null) autoExposureProp.set(PROP_AUTO_EXPOSURE_DISABLED);
 
                 int propVal = (int) MathUtil.clamp(exposureRaw, minExposure, maxExposure);
 
@@ -251,7 +252,7 @@ public class GenericUSBCameraSettables extends VisionSourceSettables {
     @Override
     public void setBrightness(int brightness) {
         try {
-            camera.setBrightness(brightness);
+	    softSet("brightness", brightness);
             this.lastBrightness = brightness;
         } catch (VideoException e) {
             logger.error("Failed to set camera brightness!", e);
@@ -287,10 +288,11 @@ public class GenericUSBCameraSettables extends VisionSourceSettables {
         videoModes = new HashMap<>();
         List<VideoMode> videoModesList = new ArrayList<>();
         try {
-            for (VideoMode videoMode : camera.enumerateVideoModes()) {
-                // Filter grey modes
-                if (videoMode.pixelFormat == PixelFormat.kGray
-                        || videoMode.pixelFormat == PixelFormat.kUnknown) {
+            VideoMode[] modes = camera.enumerateVideoModes();
+
+            for (VideoMode videoMode : modes) {
+                // Filter unsupported/undesirable modes
+                if (videoMode.pixelFormat == PixelFormat.kUnknown || videoMode.pixelFormat == PixelFormat.kGray) {
                     continue;
                 }
 

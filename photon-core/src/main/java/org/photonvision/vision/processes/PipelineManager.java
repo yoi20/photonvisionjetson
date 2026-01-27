@@ -257,6 +257,11 @@ public class PipelineManager {
                 currentUserPipeline =
                         new AprilTagPipeline((AprilTagPipelineSettings) desiredPipelineSettings);
             }
+            case AprilTagCuda -> {
+                logger.debug("Creating AprilTagCuda pipeline");
+                currentUserPipeline =
+                        new AprilTagCudaPipeline((AprilTagCudaPipelineSettings) desiredPipelineSettings);
+            }
             case Aruco -> {
                 logger.debug("Creating ArUco Pipeline");
                 currentUserPipeline = new ArucoPipeline((ArucoPipelineSettings) desiredPipelineSettings);
@@ -333,22 +338,46 @@ public class PipelineManager {
     }
 
     private CVPipelineSettings createSettingsForType(PipelineType type, String nickname) {
-        CVPipelineSettings settings =
-                switch (type) {
-                    case Reflective -> new ReflectivePipelineSettings();
-                    case ColoredShape -> new ColoredShapePipelineSettings();
-                    case AprilTag -> new AprilTagPipelineSettings();
-                    case Aruco -> new ArucoPipelineSettings();
-                    case ObjectDetection -> new ObjectDetectionPipelineSettings();
-                    case Calib3d, DriverMode, FocusCamera -> {
-                        logger.error("Got invalid pipeline type: " + type);
-                        yield null;
-                    }
-                };
-        if (settings != null) {
-            settings.pipelineNickname = nickname;
+        // Create a default settings instance for the requested pipeline type.
+        switch (type) {
+            case Reflective -> {
+                var added = new ReflectivePipelineSettings();
+                added.pipelineNickname = nickname;
+                return added;
+            }
+            case ColoredShape -> {
+                var added = new ColoredShapePipelineSettings();
+                added.pipelineNickname = nickname;
+                return added;
+            }
+            case AprilTag -> {
+                var added = new AprilTagPipelineSettings();
+                added.pipelineNickname = nickname;
+                return added;
+            }
+            case AprilTagCuda -> {
+                // CUDA-backed AprilTag settings: the pipeline will use the native GpuDetectorJNI
+                // (see org.photonvision.vision.objects.GpuDetectorJNI) to execute detection on the GPU.
+                var added = new AprilTagCudaPipelineSettings();
+                added.pipelineNickname = nickname;
+                return added;
+            }
+            case Aruco -> {
+                var added = new ArucoPipelineSettings();
+                added.pipelineNickname = nickname;
+                return added;
+            }
+            case ObjectDetection -> {
+                var added = new ObjectDetectionPipelineSettings();
+                added.pipelineNickname = nickname;
+                return added;
+            }
+            case Calib3d, DriverMode, FocusCamera -> {
+                logger.error("Got invalid pipeline type: " + type);
+                return null;
+            }
         }
-        return settings;
+        return null;
     }
 
     private void addPipelineInternal(CVPipelineSettings settings) {

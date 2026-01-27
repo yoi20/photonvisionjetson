@@ -10,7 +10,10 @@ export enum PipelineType {
   ColoredShape = 4,
   AprilTag = 5,
   Aruco = 6,
-  ObjectDetection = 7
+  ObjectDetection = 7,
+  // CUDA-backed AprilTag pipeline added from jetson-orin fork.
+  // Ordinal chosen to avoid renumbering upstream 2026 types.
+  AprilTagCuda = 8
 }
 
 export enum AprilTagFamily {
@@ -254,6 +257,46 @@ export const DefaultAprilTagPipelineSettings: AprilTagPipelineSettings = {
   doSingleTargetAlways: false
 };
 
+export interface AprilTagCudaPipelineSettings extends PipelineSettings {
+  pipelineType: PipelineType.AprilTagCuda;
+  hammingDist: number;
+  numIterations: number;
+  decimate: number;
+  blur: number;
+  decisionMargin: number;
+  refineEdges: boolean;
+  debug: boolean;
+  threads: number;
+  tagFamily: AprilTagFamily;
+  doMultiTarget: boolean;
+  doSingleTargetAlways: boolean;
+}
+export type ConfigurableAprilTagCudaPipelineSettings = Partial<
+  Omit<AprilTagCudaPipelineSettings, "pipelineType" | "hammingDist" | "debug">
+> &
+  ConfigurablePipelineSettings;
+export const DefaultAprilTagCudaPipelineSettings: AprilTagCudaPipelineSettings = {
+  ...DefaultPipelineSettings,
+  cameraGain: 75,
+  targetModel: TargetModel.AprilTag6p5in_36h11,
+  ledMode: false,
+  outputShowMultipleTargets: true,
+  cameraExposureRaw: 20,
+  pipelineType: PipelineType.AprilTagCuda,
+
+  hammingDist: 0,
+  numIterations: 40,
+  decimate: 1,
+  blur: 0,
+  decisionMargin: 35,
+  refineEdges: true,
+  debug: false,
+  threads: 4,
+  tagFamily: AprilTagFamily.Family36h11,
+  doMultiTarget: false,
+  doSingleTargetAlways: false
+};
+
 export interface ArucoPipelineSettings extends PipelineSettings {
   pipelineType: PipelineType.Aruco;
 
@@ -346,6 +389,7 @@ export type ActivePipelineSettings =
   | AprilTagPipelineSettings
   | ArucoPipelineSettings
   | ObjectDetectionPipelineSettings
+  | AprilTagCudaPipelineSettings
   | Calibration3dPipelineSettings;
 
 export type ActiveConfigurablePipelineSettings =
@@ -354,4 +398,5 @@ export type ActiveConfigurablePipelineSettings =
   | ConfigurableAprilTagPipelineSettings
   | ConfigurableArucoPipelineSettings
   | ConfigurableObjectDetectionPipelineSettings
+  | ConfigurableAprilTagCudaPipelineSettings
   | ConfigurableCalibration3dPipelineSettings;
