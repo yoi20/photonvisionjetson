@@ -1,3 +1,7 @@
+i merged [photonvision 2026](https://github.com/PhotonVision/photonvision) and [4143's fork with cuda](https://github.com/FRC-Team-4143/photonvision/tree/jetson-orin) into this repo for the jetson orin nano running jetpack 6.2.
+before you start, make sure to install the [cuda apriltag library
+](https://github.com/FRC-Team-4143/GpuDetectorJNI) without error, and for more info, look at this [chief delphi post by someone from 4143](https://www.chiefdelphi.com/t/cuda-apriltag-detection-with-photonvision/483803).
+
 # PhotonVision
 
 [![Discord](https://img.shields.io/discord/725836368059826228?color=%23738ADB&label=Join%20our%20Discord&logo=discord&logoColor=white)](https://discord.gg/wYxTwym)
